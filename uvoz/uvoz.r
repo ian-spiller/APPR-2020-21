@@ -10,7 +10,7 @@ podatki_prodaja_svet <- stran %>% html_nodes(xpath="//*[text() = 'Americas:']/an
   transmute("Podatki"=parse_character(X1, na=""),"2019"=X3,"2018"=X7,"2017"=X11) %>%
   drop_na(Podatki) %>% mutate(Regija=ifelse(`2018` == "", str_replace(Podatki, ":", ""), NA)) %>%
   fill(Regija) %>% pivot_longer(c(-Regija, -Podatki), names_to="Leto", values_to="Vrednost") %>%
-mutate(Leto=parse_number(Leto), Vrednost=parse_number(Vrednost)) %>% drop_na(Vrednost)
+  mutate(Leto=parse_number(Leto), Vrednost=parse_number(Vrednost)) %>% drop_na(Vrednost)
 
 
 #UVOZ IZ MORNINGSTARJA
@@ -18,14 +18,11 @@ mutate(Leto=parse_number(Leto), Vrednost=parse_number(Vrednost)) %>% drop_na(Vre
 podatki <- read_csv("podatki/AAPL.csv",locale = locale(encoding = "UTF-8"),skip = 2) %>%
   slice(1:16) %>% rename("Podatki"=X1)
 podatki<-podatki[,-12]
-morningstar <- as.data.frame(t(podatki[-1])) %>% select("V1","V5","V6","V7","V10") %>%
-  rownames_to_column(var="A") %>% mutate(A=str_sub(A,1,4))
-colnames(morningstar) <- c("Leto","Prodaja","Neto_dobicek",
-                           "Neto_dobicek_na_delnico",
-                           "Dividenda","Knjigovodska_vrednost")
-j<- 1:6
-morningstar[,j] <- lapply(morningstar[,j],function(x) {as.numeric(gsub(",","", x))})
-
+morningstar <- pivot_longer(podatki,c(-"Podatki")) %>% rename("Leto"=name,"Vrednost"=value)%>%
+  drop_na() %>% mutate(Leto=str_sub(Leto,1,4))
+morningstar$Vrednost <- str_replace(morningstar$Vrednost,",","") 
+morningstar[3]<-lapply(morningstar[3],function(x) as.numeric(x))
+morningstar$Leto <- parse_integer(morningstar$Leto)
 
 #UVOZ IZ YAHOO
 
@@ -77,7 +74,7 @@ podatki_quandl_earning<-Quandl("MULTPL/SP500_EARNINGS_YEAR",collapse="annual",
   mutate(Leto=as.integer(format(Datum,"%Y"))) %>%
   select("Leto","Earning_SP500" )
 podatki_quandl_earning <- podatki_quandl_earning[order(podatki_quandl_earning$Leto),] 
- 
+
 
 podatki_quandl_bv<-Quandl("MULTPL/SP500_BVPS_YEAR",collapse="annual",
                           api_key="mqxb_zyDyu5wbiG5qtTx",
@@ -107,41 +104,45 @@ kontinenti <- read_csv("podatki/kontinenti1.csv",locale = locale(encoding = "UTF
 
 #IZRACUNI PE PB
 
-PE <- select(morningstar,"Leto","Neto_dobicek_na_delnico") %>% left_join(yahoo)%>%
-  mutate(PE=Najvisja_cena/Neto_dobicek_na_delnico) %>% select("Leto","PE")
-  
-PB <- select(morningstar,"Leto","Knjigovodska_vrednost") %>% left_join(yahoo)%>%
-  mutate(PB=Najvisja_cena/Knjigovodska_vrednost)%>%
+PE <- filter(morningstar,Podatki=="Earnings Per Share USD") %>% left_join(yahoo)%>%
+  mutate(PE=Najvisja_cena/Vrednost) %>% select("Leto","PE")
+
+PB <- filter(morningstar,Podatki=="	Book Value Per Share * USD") %>%
+  left_join(yahoo)%>%
+  mutate(PB=Najvisja_cena/Vrednost)%>%
   select("Leto","PB")
-  
+
 
 #FUNKCIJA ZA RAST
 
-rast <- function(tabela,b){
+rast <- function(tabela,b,podjetje){
+  if (podjetje=="Apple"){
+  c <- filter(tabela,Podatki==b)
+  a <- mutate(c,Rast=((c$Vrednost-lag(c$Vrednost))/lag(c$Vrednost))*100)%>%
+    select("Leto","Rast")
+  }
+  else{
   a <- mutate(tabela,Rast=((tabela[[b]]-lag(tabela[[b]]))/lag(tabela[[b]]))*100)%>%
     select("Leto","Rast")
+  }
   return(a)
 } 
 
 
 #IZRACUNANE RASTI
 
-Rast_prodaje <- rast(morningstar,"Prodaja")
-  
-Rast_dobicka <-  rast(morningstar,"Neto_dobicek")
-  
-Rast_knjigovodske_vrednosti <-  rast(morningstar,"Knjigovodska_vrednost")
-  
-Rast_dividende <- rast(morningstar,"Dividenda")
+Rast_prodaje <- rast(morningstar,"Revenue USD Mil","Apple")
 
-Rast_SP_prodaja <- rast(podatki_quandl_prodaja,"Prodaja_SP500")
+Rast_dobicka <-  rast(morningstar,"Net Income USD Mil","Apple")
 
-Rast_SP_dobicka <- rast(podatki_quandl_earning,"Earning_SP500")
-  
-Rast_SP_knjigovodske_vrednosti <- rast(podatki_quandl_bv,"BV_SP500")
+Rast_knjigovodske_vrednosti <-  rast(morningstar,"Book Value Per Share * USD","Apple")
 
-Rast_SP_dividende <- rast(podatki_quandl_dividenda,"Dividenda_SP500")
+Rast_dividende <- rast(morningstar,"Dividends USD","Apple")
 
+Rast_SP_prodaja <- rast(podatki_quandl_prodaja,"Prodaja_SP500","SP")
 
+Rast_SP_dobicka <- rast(podatki_quandl_earning,"Earning_SP500","SP")
 
+Rast_SP_knjigovodske_vrednosti <- rast(podatki_quandl_bv,"BV_SP500","SP")
 
+Rast_SP_dividende <- rast(podatki_quandl_dividenda,"Dividenda_SP500","SP")

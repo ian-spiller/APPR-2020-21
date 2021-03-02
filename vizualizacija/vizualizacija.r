@@ -13,7 +13,7 @@ pe_graf <-right_join(podatki_quandl_pe,PE) %>%  ggplot() +
   theme(legend.position = c(0.3, 0.8),
         panel.grid.minor = element_blank(),
         plot.title = element_text(hjust = 0.5))
-  
+
 
 #RAST KNJIGOVODSKE VREDNOSTI
 
@@ -33,8 +33,11 @@ rast_knjigovodske_graf <- right_join(Rast_knjigovodske_vrednosti,Rast_SP_knjigov
 
 #TORTNA GRAFA
 
-priprava <- select(morningstar,Leto,Prodaja,Neto_dobicek)%>%mutate(Stroski=Prodaja-Neto_dobicek)%>%
- select(Leto,Neto_dobicek,Stroski)%>% filter(Leto==2020)
+priprava2 <- filter(morningstar,Podatki=="Net Income USD Mil")
+priprava <- filter(morningstar,Podatki=="Revenue USD Mil")%>% rename("Vrednost1"="Vrednost")%>%
+  right_join(priprava2,"Leto")%>%
+  mutate(Stroski=Vrednost1-Vrednost)%>%
+  select(Leto,Vrednost,Stroski)%>% filter(Leto==2020)
 priprava1<-as.data.frame(t(priprava[-1]))%>%mutate(delez=100*V1/sum(V1))%>%
   arrange(desc(V1)) %>%
   mutate(f=cumsum(delez) - 0.5*delez)
@@ -44,14 +47,14 @@ graf_tortni <- ggplot(priprava1) +
   geom_bar(stat="identity",width=1) +
   coord_polar("y",start = 0) +
   geom_text(aes(y=f, label=paste0(round(delez, 2), "%")),
-          x=1.3, color="white", size=4) +
+            x=1.3, color="white", size=4) +
   labs(title="Profitna marža podjetja Apple",fill="LEGENDA") +
   scale_fill_manual(values = c("#FF0033","#990000"))+
   theme_void()+
   theme(plot.title = element_text(hjust = 0.5))
-  
 
- 
+
+
 priprava_SP <- right_join(podatki_quandl_prodaja,podatki_quandl_earning)%>%
   mutate(Stroski=Prodaja_SP500-Earning_SP500)%>%
   select(Leto,Earning_SP500,Stroski)%>% filter(Leto==2020)
@@ -81,15 +84,15 @@ svet <- uvozi.zemljevid("https://www.naturalearthdata.com/http//www.naturalearth
 #Podatki prodaje po svetu
 svet_prodaja <- filter(podatki_prodaja_svet,Podatki=="Net sales"&Leto=="2019")%>%
   mutate(celina=c("Americas","Europe","China","Japan","Oceania"))
-  
+
 #Podatki za zemljevid
 svet1<-right_join(svet,kontinenti,by="GU_A3")%>%
   mutate(celina= ifelse(GU_A3=="CHN","China",
-                     ifelse(GU_A3=="JPN","Japan",
-                            ifelse(Continent_Name=="Asia","Europe",
-                                   ifelse(Continent_Name=="North America","Americas",
-                                          ifelse(Continent_Name=="Africa","Europe",
-                                                  ifelse(Continent_Name=="South America","Americas",Continent_Name)))))))%>%
+                        ifelse(GU_A3=="JPN","Japan",
+                               ifelse(Continent_Name=="Asia","Europe",
+                                      ifelse(Continent_Name=="North America","Americas",
+                                             ifelse(Continent_Name=="Africa","Europe",
+                                                    ifelse(Continent_Name=="South America","Americas",Continent_Name)))))))%>%
   right_join(svet_prodaja)%>%rename("Drzava"="Country_Name") %>% 
   select("long","lat","celina","Drzava","Vrednost","group")
 
@@ -101,7 +104,3 @@ zemljevid <- ggplot(svet1,aes(x=long,y=lat,group=group, fill=Vrednost))+
         axis.ticks=element_blank(), panel.background = element_blank()) +
   scale_fill_gradient(low = "#330000", high="#FF0033",limits=c(0,120000)) +
   labs(fill="Prodaja v milijonih USD")
-
-
-
-

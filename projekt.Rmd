@@ -51,11 +51,8 @@ Podatke za analizo sem uvozil iz SEC-a preko HTML-ja, Morningstarja in Datahuba 
 
 2. [morningstar](https://financials.morningstar.com/ratios/r.html?t=0P000000GY&culture=en&platform=sal)
 - `Leto` - spremenljivka: leto meritve (število: 2011-2020)
-- `Prodaja` - meritev: prodaja v milijonih USD (število)
-- `Neto_dobicek` - meritev: dobiček po obračunanem davku v milijonih USD (število)
-- `Neto_dobicek_na_delnico` - meritev: dobiček po obračunanem davku na posamezno delnico v USD (število)
-- `Dividenda` - meritev: dividenda v USD (število)
-- `Knjigovodska_vrednost`: knjigovodska vrednost posamezne delnice v USD (število)
+- `Podatki` - ime meritve (znaki)
+- `Vrednost` - meritev: vrednosti v USD ali % (število)
 
 3. [yahoo](https://finance.yahoo.com/quote/AAPL/history/) - za uvoz podatkov sem uporabil knjižnico quantmod 
 - `Najvisja_cena` - meritev: najvišja cena Applove delnice decembra vsako leto v USD (število)
@@ -199,11 +196,4 @@ shinyAppDir("shiny", options=list(width="100%", height=1200))
 # Zaključek
 
 Po pregledu podatkov sem opazil nekatere zanimivosti. Najbolj me je presenetil P/E delnice podjetja Apple do leta 2018 in nato njegov skok. Zanimiv podatek je tudi profitna marža podjetja Apple, ki je izrazito višja od S&P 500. Seveda bi potrebovali bolj natančno analizo podjetja Apple in njegovega poslovanja, da bi lahko podali kakršnekoli zaključke glede trenutne cene njihove delnice. Vse simulacije, ki sem jih izvedel kažejo, da so danes investitorji pripravljeni plačati višjo ceno glede na dobičke kot pa v preteklosti.   
-
-
-
-
-
-
-
 
