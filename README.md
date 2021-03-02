@@ -37,11 +37,8 @@ napovedati dobičke ter po kakšni metodi.
 
 2. [morningstar](https://financials.morningstar.com/ratios/r.html?t=0P000000GY&culture=en&platform=sal)
 - `Leto` - spremenljivka: leto meritve (število: 2011-2020)
-- `Prodaja` - meritev: prodaja v milijonih USD (število)
-- `Neto_dobicek` - meritev: dobiček po obračunanem davku v milijonih USD (število)
-- `Neto_dobicek_na_delnico` - meritev: dobiček po obračunanem davku na posamezno delnico v USD (število)
-- `Dividenda` - meritev: dividenda v USD (število)
-- `Knjigovodska_vrednost`: knjigovodska vrednost posamezne delnice v USD (število)
+- `Podatki` - ime meritve (znaki)
+- `Vrednost` - meritev: vrednosti v USD ali % (število)
 
 3. [yahoo](https://finance.yahoo.com/quote/AAPL/history/) - za uvoz podatkov sem uporabil knjižnico quantmod 
 - `Najvisja_cena` - meritev: najvišja cena Applove delnice decembra vsako leto v USD (število)
